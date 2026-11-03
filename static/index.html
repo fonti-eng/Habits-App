@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Mis hábitos</title>
+</head>
+<body>
+
+	<!-- input type="text" es el campo de texto / placeholder es el texto gris de ayuda que desaparece al escribir --> 
+	<input type="text" id="campo-habito" placeholder="Nombre del hábito">
+	<!-- <button> es el botón; lo que va entre las etiquetas es lo que se lee en él-->
+	<button id="boton-habito">Añadir</button>
+	<!-- <ul> es una lista, y más adelante irá recibiendo un <li>por cada elemento / id="" le pone un nombre único a cada elemento -->
+	<ul id="lista-habitos"></ul>
+
+
+	<script>
+		// -- LEER HÁBITOS CON FETCH() Y PINTARLOS EN LA LISTA --
+		// Busca en la página el elemento con ese id. Por eso los pusimos arriba.
+		const lista = document.getElementById("lista-habitos");
+
+		// Pedir algo a la API tarda un instante. Await significa "espera a que llegue la respuesta antes de seguir" y SOLO puede usarse en una función marcada com async
+		async function cargarHabitos() {
+			// fecth("/habits") hace un GET a esa ruta
+			const respuesta = await fetch("/habits");
+			// respuesta.json() convierte el texto JSON que llega en datos de JavaScript (una lista de objetos) igual que JSON.stringly hacía lo contrario
+			const habits = await respuesta.json();
+			
+			// Vacía la lista antes de pintarla. Sin esto, cada vez que se actualice, se añadirían los elementos otra vez duplicados
+			lista.innerHTML = ""
+
+			// Recorre cada elemento 
+			for (const habit of habits){
+				// Crean un <li> nuevo, le ponen el texto y lo cuelgan de la lista
+				const li = document.createElement("li");
+				li.textContent = habit.name;
+				lista.appendChild(li);
+			}
+		}
+
+		// Al final llama a la función cuando se abre la página para que se ejecute sola
+		cargarHabitos();
+	
+
+		// -- QUE EL BOTÓN ENVÍE EL HÁBITO CON POST Y LA LISTA SE ACTUALICE --
+
+		const campo = document.getElementById("campo-habito");
+		const boton = document.getElementById("boton-habito");
+
+		// Cuado se pulse este elemento, ejecuta esta función
+		boton.addEventListener("click", async function () {
+			// Si mandan un hábito vacío (o espacios en blanco), se retorna sin hacer nada
+			if (campo.value.trim() === ""){
+				return;
+			}
+			// En caso contrario, se actualiza la lista
+			await fetch("/habits", {
+				// Tipo de pedido
+				method: "POST",
+				// La cabecera Content-Type: avisa a FastAPI de que el cuerpo viene en JSON
+				headers: { "Content-Type": "application/json"},
+				// Los datos que se envían. JSON.stringfly convierte el objeto en texto JSON
+				body: JSON.stringify({ name: campo.value.trim()
+				 }),
+			});
+
+			// Vacía el campo después de enviar
+			campo.value = "";
+			// Vuelve a padir la lista para que aparezca el hábito nuevo. Por eso la lista se vacía con innerHTML = "" antes de pintar
+			cargarHabitos();
+		})
+
+	</script>
+
+</body>
+</html>
